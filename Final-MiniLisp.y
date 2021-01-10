@@ -8,7 +8,7 @@
     #define true  1
     #define false 0
 
-    #define DEBUG 0
+    #define DEBUG 1
     #define MAX 999
 
     #define no_type             2647672694
@@ -413,25 +413,25 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
         case string:
             parametersToAssign->val->name = parametersName->val->name;
             
-            traverse(parametersToAssign, parametersToAssign->val->type, true);
+            /* traverse(parametersToAssign, parametersToAssign->val->type, true); */
             
             if(DEBUG) {
                 printf("to assign: %d\n", parametersToAssign->val->intVal);
             }
 
-            bindParams(functionTask, parametersToAssign);
+            bindParams(functionTask, cloneAST(parametersToAssign));
 
             break;
         case function_parameters:
             parametersToAssign->leftChild->val->name = parametersName->leftChild->val->name;
 
-            traverse(parametersToAssign->leftChild, parametersToAssign->leftChild->val->type, true);
+            /* traverse(parametersToAssign->leftChild, parametersToAssign->leftChild->val->type, true); */
             
             if(DEBUG) {
                 printf("to assign: %d\n", parametersToAssign->leftChild->val->intVal);
             }
 
-            bindParams(functionTask, parametersToAssign->leftChild);
+            bindParams(functionTask, cloneAST(parametersToAssign->leftChild));
 
             assignParamsNameAndBind(parametersName->rightChild, parametersToAssign->rightChild, functionTask);
             break;
@@ -446,9 +446,10 @@ void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
     if(taskNode->val->type == get_variable) {
         if(strcmp(taskNode->val->name, toReplace->val->name) == 0) {
             if(DEBUG) {
-                printf("bind: %d ->", taskNode->val->intVal);
+                printf("bind: %lu -> ", taskNode->val->type);
             }
 
+            taskNode->val->type = toReplace->val->type;
             taskNode->val->intVal = toReplace->val->intVal;
             taskNode->val->boolVal = toReplace->val->boolVal;
 
@@ -456,7 +457,7 @@ void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
             taskNode->rightChild = toReplace->rightChild;
 
             if(DEBUG) {
-                printf(" %d\n", taskNode->val->intVal);
+                printf("%lu\n", taskNode->val->type);
             }
 
             return;

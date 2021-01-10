@@ -7,15 +7,15 @@ gcc -c Final-MiniLisp.tab.c
 gcc -c lex.yy.c
 gcc lex.yy.o Final-MiniLisp.tab.o -lfl
 
-# ./a.out < Final-MiniLisp.in
+./a.out < Final-MiniLisp.in
 
-for file in /mnt/c/Users/Xyphuz/Dropbox/C_C++_C#/Compiler/Final-MiniLisp/test_data/*
-do
-    ./smli < "$file"
-    echo "---"
-    ./a.out < "$file"
-    echo "-------"
-done
+# for file in /mnt/c/Users/Xyphuz/Dropbox/C_C++_C#/Compiler/Final-MiniLisp/test_data/*
+# do
+#     ./smli < "$file"
+#     echo "---"
+#     ./a.out < "$file"
+#     echo "-------"
+# done
 
 rm Final-MiniLisp.tab.c
 rm Final-MiniLisp.tab.h
