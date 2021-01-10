@@ -47,9 +47,6 @@
         char*           name;
         int             intVal;
         bool            boolVal;
-
-        int             parameterStack[MAX];
-        int             parameterStackTop;
     };
 
     struct ASTNode {
@@ -86,13 +83,13 @@
     struct Function* definedFunctions[MAX];
     int definedFunctionsTop;
 
+    struct ASTNode* cloneAST(struct ASTNode* node);
+
     void addFunction(char* functionName, struct ASTNode* functionToAdd);
     struct Function* getFunction(char* functionName);
 
     void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* parametersToAssign, struct ASTNode* functionTask);
     void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace);
-
-    void popParameter(struct ASTNode* node);
 }
 
 %define parse.error verbose
@@ -325,8 +322,6 @@ struct Dynamic* newDynamic(unsigned long type, char* name, int intVal, bool bool
     toCreate->intVal = intVal;
     toCreate->boolVal = boolVal;
 
-    toCreate->parameterStackTop = -1;
-
     return toCreate;
 }
 
@@ -367,6 +362,25 @@ struct ASTNode* getDefinedVariable(char* name) {
     }
 }
 
+struct ASTNode* cloneAST(struct ASTNode* node) {
+    if(node == NULL) {
+        return NULL;
+    }
+    
+    struct ASTNode* toClone = emptyNode();
+
+    toClone->val->type = node->val->type;
+    toClone->val->name = node->val->name;
+
+    toClone->val->intVal = node->val->intVal;
+    toClone->val->boolVal = node->val->boolVal;
+
+    toClone->leftChild = cloneAST(node->leftChild);
+    toClone->rightChild = cloneAST(node->rightChild);
+
+    return toClone;
+}
+
 void addFunction(char* functionName, struct ASTNode* functionToAdd) {
     struct Function* toAdd = (struct Function *) malloc(sizeof(struct Function));
 
@@ -380,7 +394,13 @@ void addFunction(char* functionName, struct ASTNode* functionToAdd) {
 struct Function* getFunction(char* functionName) {
     for(int i = 0; i <= definedFunctionsTop; i++) {
         if(strcmp(definedFunctions[i]->functionName, functionName) == 0) {
-            return definedFunctions[i];
+            struct Function* result = (struct Function *) malloc(sizeof(struct Function));
+
+            result->functionName = strdup(definedFunctions[i]->functionName);
+            result->params = cloneAST(definedFunctions[i]->params);
+            result->task = cloneAST(definedFunctions[i]->task);
+
+            return result;
         }
     }
 }
@@ -396,7 +416,7 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
             traverse(parametersToAssign, parametersToAssign->val->type, true);
             
             if(DEBUG) {
-                printf("to assgn: %d\n", parametersToAssign->val->intVal);
+                printf("to assign: %d\n", parametersToAssign->val->intVal);
             }
 
             bindParams(functionTask, parametersToAssign);
@@ -408,7 +428,7 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
             traverse(parametersToAssign->leftChild, parametersToAssign->leftChild->val->type, true);
             
             if(DEBUG) {
-                printf("to assgn: %d\n", parametersToAssign->leftChild->val->intVal);
+                printf("to assign: %d\n", parametersToAssign->leftChild->val->intVal);
             }
 
             bindParams(functionTask, parametersToAssign->leftChild);
@@ -422,14 +442,12 @@ void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
     if(taskNode == NULL) {
         return;
     }
-    /* printf("to bind: %lu\n", taskNode->val->type); */
 
     if(taskNode->val->type == get_variable) {
         if(strcmp(taskNode->val->name, toReplace->val->name) == 0) {
             if(DEBUG) {
                 printf("bind: %d ->", taskNode->val->intVal);
             }
-            taskNode->val->parameterStack[++taskNode->val->parameterStackTop] = taskNode->val->intVal;
 
             taskNode->val->intVal = toReplace->val->intVal;
             taskNode->val->boolVal = toReplace->val->boolVal;
@@ -449,22 +467,10 @@ void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
     bindParams(taskNode->rightChild, toReplace);
 }
 
-void popParameter(struct ASTNode* node) {
-    if(node->val->parameterStackTop > -1) {
-        if(DEBUG) {
-            printf("Stack top: %d, pop parameter.\n", node->val->parameterStackTop);
-        }
-
-        node->val->intVal = node->val->parameterStack[node->val->parameterStackTop--];
-    }
-}
-
 void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFunction) {
     if(node == NULL) {
         return;
     }
-
-    /* printf("current traverse: %lu\n", node->val->type); */
 
     switch(node->val->type) {
         case no_type:
@@ -523,11 +529,6 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
         case mul:
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
-
-            /* if(node->parent->parent->parent->val->type == function) {
-                popParameter(node->leftChild);
-                popParameter(node->rightChild);
-            } */
 
             node->val->intVal = node->leftChild->val->intVal * node->rightChild->val->intVal;
 

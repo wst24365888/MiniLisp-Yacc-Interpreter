@@ -1,5 +1,5 @@
 (define f
   (fun (x) (if (= x 1)
-               x
+               x 
                (* x (f (- x 1))))))
 (print-num (f 4))
