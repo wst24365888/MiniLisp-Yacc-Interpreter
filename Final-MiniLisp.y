@@ -8,35 +8,36 @@
     #define true  1
     #define false 0
 
-    #define DEBUG 1
+    #define DEBUG 0
     #define MAX 999
 
-    #define no_type             2647672694
-    #define equals_to_parent    1265483310
-    #define print_num           3328096084
-    #define print_bool          418110896
-    #define if_else             3488659535
-    #define if_stmts            17783521
-    #define define_variable     1904048008
-    #define get_variable        563528797
-    #define define_function     2756550056
-    #define function            451124702
-    #define function_parameters 434998129
-    #define call_function       1684390617
-    #define integer             1958354022
-    #define string              1561885455
-    #define boolean             3847221336
-    #define add                 2194969249
-    #define sub                 2196162498
-    #define mul                 2195766214
-    #define div                 2195168699
-    #define mod                 2195764664
-    #define bigger_than         2719375090
-    #define smaller_than        415250802
-    #define equal               3689648016
-    #define and                 2194971819
-    #define or                  58680153
-    #define not                 2195830729
+    #define no_type                 2647672694
+    #define equals_to_parent        1265483310
+    #define print_num               3328096084
+    #define print_bool              418110896
+    #define if_else                 3488659535
+    #define if_stmts                17783521
+    #define define_variable         1904048008
+    #define get_variable            563528797
+    #define define_function         2756550056
+    #define function                451124702
+    #define function_parameters     434998129
+    #define call_function           1684390617
+    #define define_inside_function  1499862659
+    #define integer                 1958354022
+    #define string                  1561885455
+    #define boolean                 3847221336
+    #define add                     2194969249
+    #define sub                     2196162498
+    #define mul                     2195766214
+    #define div                     2195168699
+    #define mod                     2195764664
+    #define bigger_than             2719375090
+    #define smaller_than            415250802
+    #define equal                   3689648016
+    #define and                     2194971819
+    #define or                      58680153
+    #define not                     2195830729
 
     int yylex();
     void yyerror(const char *message);
@@ -101,12 +102,16 @@
 %type   <ASTN>  stmt
 %type   <ASTN>  stmts
 %type   <ASTN>  print_stmt
+
 %type   <ASTN>  exp
 %type   <ASTN>  exps
+
 %type   <ASTN>  num_op
 %type   <ASTN>  logical_op
+
 %type   <ASTN>  def_stmt
 %type   <ASTN>  variable
+
 %type   <ASTN>  function_exp
 %type   <ASTN>  ids
 %type   <ASTN>  function_call
@@ -114,6 +119,7 @@
 %type   <ASTN>  function_body
 %type   <ASTN>  function_name
 %type   <ASTN>  parameters
+
 %type   <ASTN>  if_exp
 %type   <ASTN>  test_exp
 %type   <ASTN>  then_exp
@@ -249,6 +255,7 @@ def_stmt        :   '(' DEFINE ID exp ')'   {
                         $$ = newNode(newDynamic(define_variable, NULL, 0, false), $3, $4);
                     }
                 }
+                ;
 
 variable        :   ID  {
                     $$ = $1;
@@ -270,7 +277,10 @@ function_ids    :   '(' ids ')' {
                     $$ = $2;
                 }
 
-function_body   :   exp         {
+function_body   :   def_stmt function_body   {
+                    $$ = newNode(newDynamic(define_inside_function, NULL, 0, false), $1, $2);
+                }
+                |   exp             {
                     $$ = $1;
                 }
 
@@ -413,8 +423,6 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
         case string:
             parametersToAssign->val->name = parametersName->val->name;
             
-            /* traverse(parametersToAssign, parametersToAssign->val->type, true); */
-            
             if(DEBUG) {
                 printf("to assign: %d\n", parametersToAssign->val->intVal);
             }
@@ -424,8 +432,6 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
             break;
         case function_parameters:
             parametersToAssign->leftChild->val->name = parametersName->leftChild->val->name;
-
-            /* traverse(parametersToAssign->leftChild, parametersToAssign->leftChild->val->type, true); */
             
             if(DEBUG) {
                 printf("to assign: %d\n", parametersToAssign->leftChild->val->intVal);
@@ -439,7 +445,7 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
 }
 
 void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
-    if(taskNode == NULL) {
+    if(taskNode == NULL || taskNode->val->type == define_function) {
         return;
     }
 
@@ -628,7 +634,6 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             break;
         case get_variable: {
             /* If we use variable declartion in a case, we must use curly brackets {} in that case. */
-            /* printf("inside function: %s\n", insideFunction ? "#t" : "#f"); */
             if(!insideFunction) {
                 struct ASTNode* temp;
 
@@ -650,11 +655,19 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             addFunction(node->leftChild->val->name, node->rightChild);
 
             break;
+        case define_inside_function:
+            traverse(node->leftChild, node->val->type, insideFunction);
+            traverse(node->rightChild, node->val->type, insideFunction);
+
+            node->val->intVal = node->rightChild->val->intVal;
+            node->val->boolVal = node->rightChild->val->boolVal;
+
+            break;
         case call_function:
             if(node->leftChild->val->type == function) {
                 assignParamsNameAndBind(node->leftChild->leftChild, node->rightChild, node->leftChild->rightChild);
 
-                traverse(node->leftChild->rightChild, node->leftChild->rightChild->val->type, true);
+                traverse(node->leftChild->rightChild, node->leftChild->val->type, true);
 
                 node->val->intVal = node->leftChild->rightChild->val->intVal;
                 node->val->boolVal = node->leftChild->rightChild->val->boolVal;
@@ -671,15 +684,15 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
 
             break;
         case if_else:
-            traverse(node->leftChild, node->leftChild->val->type, insideFunction);
+            traverse(node->leftChild, node->val->type, insideFunction);
 
             if(node->leftChild->val->boolVal) {
-                traverse(node->rightChild->leftChild, node->rightChild->leftChild->val->type, insideFunction);
+                traverse(node->rightChild->leftChild, node->rightChild->val->type, insideFunction);
                 
                 node->val->intVal = node->rightChild->leftChild->val->intVal;
                 node->val->boolVal = node->rightChild->leftChild->val->boolVal;
             } else {
-                traverse(node->rightChild->rightChild, node->rightChild->rightChild->val->type, insideFunction);
+                traverse(node->rightChild->rightChild, node->rightChild->val->type, insideFunction);
                 
                 node->val->intVal = node->rightChild->rightChild->val->intVal;
                 node->val->boolVal = node->rightChild->rightChild->val->boolVal;

@@ -10,7 +10,7 @@ const unsigned long hash(const char* str) {
 }
 
 int main() {
-    char* types[26] = {
+    char* types[27] = {
         "no_type",
         "equals_to_parent",
         "print_num",
@@ -23,6 +23,7 @@ int main() {
         "function",
         "function_parameters",
         "call_function",
+        "define_inside_function",
         "integer",
         "string",
         "boolean",
