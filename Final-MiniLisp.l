@@ -16,41 +16,19 @@ bool        "#t"|"#f"
 "print-num"     {return PRINT_NUM;}
 "print-bool"	{return PRINT_BOOL;}
 
-"+"             {
-                    return ADD;
-                }
-"-"             {
-                    return SUB;
-                }
-"*"             {
-                    return MUL;
-                }
-"/"             {
-                    return DIV;
-                }
-"mod"           {
-                    return MOD;
-                }
+"+"             {return ADD;}
+"-"             {return SUB;}
+"*"             {return MUL;}
+"/"             {return DIV;}
+"mod"           {return MOD;}
 
-">"             {
-                    return BIGGER_THAN;
-                }
-"<"             {
-                    return SMALLER_THAN;
-                }
-"="             {
-                    return EQUAL;
-                }
+">"             {return BIGGER_THAN;}
+"<"             {return SMALLER_THAN;}
+"="             {return EQUAL;}
 
-"and"           {
-                    return AND;
-                }
-"or"            {
-                    return OR;
-                }
-"not"           {
-                    return NOT;
-                }
+"and"           {return AND;}
+"or"            {return OR;}
+"not"           {return NOT;}
 
 "define"        {return DEFINE;}
 "fun"           {return FUNCTION;}
