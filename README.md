@@ -2,6 +2,17 @@
 
 A interpreter of a prototype of LISP.
 
+## Environment
+
+- Windows 10
+- WSL 2
+    - Ubuntu 20.04 LTS
+        - bison 2:3.5.1+dfsg-1
+        - flex 2.6.4-6.2
+        - gcc 4:9.3.0-1ubuntu2
+- Visual Studio Code
+    - Yash 0.2.6
+
 ## Implement Way
 
 - C
