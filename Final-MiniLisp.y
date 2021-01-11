@@ -51,7 +51,7 @@
     };
 
     struct ASTNode {
-        struct Dynamic*  val;
+        struct Dynamic* val;
         
         struct ASTNode* leftChild;
         struct ASTNode* rightChild;
