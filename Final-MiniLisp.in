@@ -1,6 +1,7 @@
-(define foo
-  (fun (f x) (f x)))
+(define dist-square
+  (fun (x y)
+    (define square (fun (x) (* x x)))
+    (+ (square x) (square y))))
 
-(print-num
-  (foo (fun (x) (- x 1)) 10))
+(print-num (dist-square 3 4))
 
