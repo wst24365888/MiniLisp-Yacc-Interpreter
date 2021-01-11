@@ -277,10 +277,10 @@ function_ids    :   '(' ids ')' {
                     $$ = $2;
                 }
 
-function_body   :   def_stmt function_body   {
+function_body   :   def_stmt function_body  {
                     $$ = newNode(newDynamic(define_inside_function, NULL, 0, false), $1, $2);
                 }
-                |   exp             {
+                |   exp                     {
                     $$ = $1;
                 }
 
@@ -367,7 +367,7 @@ void addDefinedVariable(struct ASTNode* node) {
 struct ASTNode* getDefinedVariable(char* name) {
     for(int i = 0; i <= definedVariablesTop; i++) {
         if(strcmp(definedVariables[i]->val->name, name) == 0) {
-            return definedVariables[i];
+            return cloneAST(definedVariables[i]);
         }
     }
 }
@@ -413,6 +413,8 @@ struct Function* getFunction(char* functionName) {
             return result;
         }
     }
+
+    return NULL;
 }
 
 void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* parametersToAssign, struct ASTNode* functionTask) {
@@ -456,6 +458,7 @@ void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
             }
 
             taskNode->val->type = toReplace->val->type;
+
             taskNode->val->intVal = toReplace->val->intVal;
             taskNode->val->boolVal = toReplace->val->boolVal;
 
@@ -479,10 +482,12 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
         return;
     }
 
+    /* printf("%lu\n", node->val->type); */
+
     switch(node->val->type) {
         case no_type:
-            traverse(node->leftChild, node->val->type, insideFunction);
-            traverse(node->rightChild, node->val->type, insideFunction);
+            traverse(node->leftChild, node->leftChild->val->type, insideFunction);
+            traverse(node->rightChild, node->rightChild->val->type, insideFunction);
             
             break;
         case equals_to_parent:
@@ -494,7 +499,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             }
             break;
         case print_num:
-            traverse(node->leftChild, node->val->type, insideFunction);
+            traverse(node->leftChild, node->leftChild->val->type, insideFunction);
 
             if(DEBUG) {
                 printf("print_num: %d\n", node->leftChild->val->intVal);
@@ -504,7 +509,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
 
             break;
         case print_bool:
-            traverse(node->leftChild, node->val->type, insideFunction);
+            traverse(node->leftChild, node->leftChild->val->type, insideFunction);
 
             if(DEBUG) {
                 printf("print_bool: %s\n", node->leftChild->val->boolVal ? "#t" : "#f");
@@ -517,6 +522,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = integer;
             node->val->intVal = node->leftChild->val->intVal + node->rightChild->val->intVal;
 
             if(DEBUG) {
@@ -527,6 +533,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = integer;
             node->val->intVal = node->leftChild->val->intVal - node->rightChild->val->intVal;
 
             if(DEBUG) {
@@ -537,6 +544,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = integer;
             node->val->intVal = node->leftChild->val->intVal * node->rightChild->val->intVal;
 
             if(DEBUG) {
@@ -547,6 +555,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = integer;
             node->val->intVal = node->leftChild->val->intVal / node->rightChild->val->intVal;
 
             if(DEBUG) {
@@ -557,26 +566,29 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = integer;
+            node->val->intVal = node->leftChild->val->intVal % node->rightChild->val->intVal;
+
             if(DEBUG) {
                 printf("%d = %d %% %d\n", node->val->intVal, node->leftChild->val->intVal, node->rightChild->val->intVal);
             }
-            node->val->intVal = node->leftChild->val->intVal % node->rightChild->val->intVal;
-
             break;
         case bigger_than:
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = boolean;
+            node->val->boolVal = node->leftChild->val->intVal > node->rightChild->val->intVal ? true : false;
+
             if(DEBUG) {
                 printf("%s = %d > %d\n", node->val->boolVal ? "#t" : "#f", node->leftChild->val->intVal, node->rightChild->val->intVal);
-            }
-            node->val->boolVal = node->leftChild->val->intVal > node->rightChild->val->intVal ? true : false;
-            
+            }            
             break;
         case smaller_than:
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = boolean;
             node->val->boolVal = node->leftChild->val->intVal < node->rightChild->val->intVal ? true : false;
             
             if(DEBUG) {
@@ -591,6 +603,8 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
             
+            node->val->type = boolean;
+            /* TO CHANGE */
             node->val->intVal = node->leftChild->val->intVal;
             node->val->boolVal = (node->leftChild->val->intVal == node->rightChild->val->intVal)*node->rightChild->val->boolVal ? true : false;
 
@@ -601,17 +615,19 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
         case and:
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
+            
+            node->val->type = boolean;
+            node->val->boolVal = node->leftChild->val->boolVal && node->rightChild->val->boolVal;
 
             if(DEBUG) {
                 printf("%s = %s && %s\n", node->val->boolVal ? "#t" : "#f", node->leftChild->val->boolVal ? "#t" : "#f", node->rightChild->val->boolVal ? "#t" : "#f");
             }
-            node->val->boolVal = node->leftChild->val->boolVal && node->rightChild->val->boolVal;
-            
             break;
         case or:
             traverse(node->leftChild, node->val->type, insideFunction);
             traverse(node->rightChild, node->val->type, insideFunction);
 
+            node->val->type = boolean;
             node->val->boolVal = node->leftChild->val->boolVal || node->rightChild->val->boolVal;
             
             if(DEBUG) {
@@ -621,6 +637,7 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
         case not:
             traverse(node->leftChild, node->val->type, insideFunction);
 
+            node->val->type = boolean;
             node->val->boolVal = !node->leftChild->val->boolVal;
             
             if(DEBUG) {
@@ -635,13 +652,15 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
         case get_variable: {
             /* If we use variable declartion in a case, we must use curly brackets {} in that case. */
             if(!insideFunction) {
-                struct ASTNode* temp;
+                struct ASTNode* result = getDefinedVariable(node->val->name);
 
-                temp = getDefinedVariable(node->val->name);
+                node->val->type = result->val->type;
 
-                node->val = temp->val;
-                node->leftChild = temp->leftChild;
-                node->rightChild = temp->rightChild;
+                node->val->intVal = result->val->intVal;
+                node->val->boolVal = result->val->boolVal;
+
+                node->leftChild = cloneAST(result->leftChild);
+                node->rightChild = cloneAST(result->rightChild);
                 
                 traverse(node, node->val->type, insideFunction);
 
@@ -669,17 +688,53 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
 
                 traverse(node->leftChild->rightChild, node->leftChild->val->type, true);
 
+                node->val->type = node->leftChild->rightChild->val->type;
+
                 node->val->intVal = node->leftChild->rightChild->val->intVal;
                 node->val->boolVal = node->leftChild->rightChild->val->boolVal;
+
+                struct ASTNode* temp = cloneAST(node->leftChild);
+                node->leftChild = cloneAST(node->leftChild->rightChild->leftChild);
+                node->rightChild = cloneAST(temp->rightChild->rightChild);
             } else if(node->leftChild->val->type == string) {
                 struct Function* functionToCall = getFunction(node->leftChild->val->name);
 
-                assignParamsNameAndBind(functionToCall->params, node->rightChild, functionToCall->task);
+                if(functionToCall != NULL) {
+                    assignParamsNameAndBind(functionToCall->params, node->rightChild, functionToCall->task);
 
-                traverse(functionToCall->task, functionToCall->task->val->type, true);
+                    traverse(functionToCall->task, functionToCall->task->val->type, true);
 
-                node->val->intVal = functionToCall->task->val->intVal;
-                node->val->boolVal = functionToCall->task->val->boolVal;
+                    node->val->type = functionToCall->task->val->type;
+
+                    node->val->intVal = functionToCall->task->val->intVal;
+                    node->val->boolVal = functionToCall->task->val->boolVal;
+
+                    node->leftChild = cloneAST(functionToCall->task->leftChild);
+                    node->rightChild = cloneAST(functionToCall->task->rightChild);
+                } else {
+                    struct ASTNode* result = getDefinedVariable(node->leftChild->val->name);
+
+                    node->leftChild->val->type = result->val->type;
+                    /* node->leftChild->val->type == call_function */
+
+                    node->leftChild->val->intVal = result->val->intVal;
+                    node->leftChild->val->boolVal = result->val->boolVal;
+
+                    node->leftChild->leftChild = cloneAST(result->leftChild);
+                    node->leftChild->rightChild = cloneAST(result->rightChild);
+
+                    traverse(node->leftChild, node->leftChild->val->type, true);
+
+                    assignParamsNameAndBind(node->leftChild->leftChild, node->rightChild, node->leftChild->rightChild);
+
+                    traverse(node->leftChild->rightChild, node->leftChild->rightChild->val->type, true);
+
+                    node->val->type = node->leftChild->rightChild->val->type;
+                    /* node->leftChild->val->type == function */
+
+                    node->val->intVal = node->leftChild->rightChild->val->intVal;
+                    node->val->boolVal = node->leftChild->rightChild->val->boolVal;
+                }
             }
 
             break;
@@ -688,11 +743,15 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
 
             if(node->leftChild->val->boolVal) {
                 traverse(node->rightChild->leftChild, node->rightChild->val->type, insideFunction);
+
+                node->val->type = node->rightChild->leftChild->val->type;
                 
                 node->val->intVal = node->rightChild->leftChild->val->intVal;
                 node->val->boolVal = node->rightChild->leftChild->val->boolVal;
             } else {
                 traverse(node->rightChild->rightChild, node->rightChild->val->type, insideFunction);
+
+                node->val->type = node->rightChild->rightChild->val->type;
                 
                 node->val->intVal = node->rightChild->rightChild->val->intVal;
                 node->val->boolVal = node->rightChild->rightChild->val->boolVal;

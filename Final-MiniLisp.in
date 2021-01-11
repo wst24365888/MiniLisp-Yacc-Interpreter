@@ -1,5 +1,7 @@
-(define f
-  (fun (x) (if (= x 1)
-               x 
-               (* x (f (- x 1))))))
-(print-num (f 4))
+(define x 0)
+
+(print-num
+  ((fun (x y z) (+ x (* y z))) 10 20 30))
+
+
+(print-num x)
