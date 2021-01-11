@@ -426,7 +426,7 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
             parametersToAssign->val->name = parametersName->val->name;
             
             if(DEBUG) {
-                printf("to assign: %d\n", parametersToAssign->val->intVal);
+                printf("to assign: %d (%lu)\n", parametersToAssign->val->intVal, parametersToAssign->val->type);
             }
 
             bindParams(functionTask, cloneAST(parametersToAssign));
@@ -436,7 +436,7 @@ void assignParamsNameAndBind(struct ASTNode* parametersName, struct ASTNode* par
             parametersToAssign->leftChild->val->name = parametersName->leftChild->val->name;
             
             if(DEBUG) {
-                printf("to assign: %d\n", parametersToAssign->leftChild->val->intVal);
+                printf("to assign: %d (%lu)\n", parametersToAssign->leftChild->val->intVal, parametersToAssign->leftChild->val->type);
             }
 
             bindParams(functionTask, cloneAST(parametersToAssign->leftChild));
@@ -451,7 +451,25 @@ void bindParams(struct ASTNode* taskNode, struct ASTNode* toReplace) {
         return;
     }
 
-    if(taskNode->val->type == get_variable) {
+    if(taskNode->val->type == string && toReplace->val->type == function) {
+        if(DEBUG) {
+            printf("bind: %lu -> ", taskNode->val->type);
+        }
+
+        taskNode->val->type = toReplace->val->type;
+
+        taskNode->val->intVal = toReplace->val->intVal;
+        taskNode->val->boolVal = toReplace->val->boolVal;
+
+        taskNode->leftChild = toReplace->leftChild;
+        taskNode->rightChild = toReplace->rightChild;
+
+        if(DEBUG) {
+            printf("%lu\n", taskNode->val->type);
+        }
+
+        return;
+    } else if(taskNode->val->type == get_variable) {
         if(strcmp(taskNode->val->name, toReplace->val->name) == 0) {
             if(DEBUG) {
                 printf("bind: %lu -> ", taskNode->val->type);
@@ -481,8 +499,6 @@ void traverse(struct ASTNode* node, unsigned long parent_type, bool insideFuncti
     if(node == NULL) {
         return;
     }
-
-    /* printf("%lu\n", node->val->type); */
 
     switch(node->val->type) {
         case no_type:
