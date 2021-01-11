@@ -1,11 +1,15 @@
 # Mini LISP Interpreter
 
+A interpreter of a prototype of LISP.
+
 ## Implemented Way
+
 - C
 - Yacc
 - Lex
 
 ## Feature
+
 - Type Checking
 - Print Statements
     - Print Number
