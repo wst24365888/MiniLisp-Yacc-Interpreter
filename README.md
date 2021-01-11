@@ -2,7 +2,7 @@
 
 A interpreter of a prototype of LISP.
 
-## Implemented Way
+## Implement Way
 
 - C
 - Yacc
