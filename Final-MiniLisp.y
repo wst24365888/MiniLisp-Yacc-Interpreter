@@ -509,7 +509,7 @@ char* getTypeName(unsigned long type) {
 void typeChecking(struct ASTNode* node, unsigned long type) {
     if(node->val->type != type) {
         char errMsg[MAX];
-        sprintf(errMsg, "Type Error: Expect '%s' but got '%s'.", getTypeName(type), getTypeName(node->val->type));
+        sprintf(errMsg, "Type Error: Expecting '%s', but got '%s'.", getTypeName(type), getTypeName(node->val->type));
 
         yyerror(errMsg);
     }
