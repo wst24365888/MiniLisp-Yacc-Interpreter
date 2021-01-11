@@ -346,13 +346,6 @@ struct ASTNode* newNode(struct Dynamic* val, struct ASTNode* leftChild, struct A
     toCreate->leftChild = leftChild;
     toCreate->rightChild = rightChild;
 
-    if(leftChild != NULL) {
-        leftChild->parent = toCreate;
-    }
-    if(rightChild != NULL) {
-        rightChild->parent = toCreate;
-    }
-
     return toCreate;
 }
 
