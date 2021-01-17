@@ -1,5 +1,5 @@
-# cd /mnt/d/Dropbox/C_C++_C#/Compiler/Final-MiniLisp
-cd /mnt/c/Users/Xyphuz/Dropbox/C_C++_C#/Compiler/Final-MiniLisp
+cd /mnt/d/Dropbox/C_C++_C#/Compiler/Final-MiniLisp
+# cd /mnt/c/Users/Xyphuz/Dropbox/C_C++_C#/Compiler/Final-MiniLisp
 
 bison -d Final-MiniLisp.y
 flex Final-MiniLisp.l
@@ -9,8 +9,8 @@ gcc lex.yy.o Final-MiniLisp.tab.o -lfl
 
 # ./a.out < Final-MiniLisp.in
 
-for file in /mnt/c/Users/Xyphuz/Dropbox/C_C++_C#/Compiler/Final-MiniLisp/test_data/*
-# for file in /mnt/d/Dropbox/C_C++_C#/Compiler/Final-MiniLisp/test_data/*
+# for file in /mnt/c/Users/Xyphuz/Dropbox/C_C++_C#/Compiler/Final-MiniLisp/test_data/*
+for file in /mnt/d/Dropbox/C_C++_C#/Compiler/Final-MiniLisp/test_data/*
 do
     # ./smli < "$file"
     echo -e "\n<!-------- ${file##*/} --------!>\n"
