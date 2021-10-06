@@ -12,7 +12,7 @@ do
     # echo -e "\n<!-------- ${file##*/} --------!>\n"
     echo -e "\n--------------\n"
     cat "$file"
-    echo -e "\nanswer =>\n"
+    echo -e "\noutput =>\n"
     ./a.out < "$file"
 done
 
